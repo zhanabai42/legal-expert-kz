@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Правовая экспертиза — РК</title>
+<style>
+  :root {
+    --paper: #f5f0e8;
+    --paper-dark: #ede5d0;
+    --ink: #2c2418;
+    --ink-light: #5a4a35;
+    --seal: #8b1a1a;
+    --seal-light: #c0392b;
+    --gold: #b8962e;
+    --border: #c9b99a;
+    --success: #2d6a4f;
+    --warning: #e07b00;
+    --shadow: rgba(44,36,24,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--paper-dark);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 3px solid var(--gold);
+  }
+  header .logo { font-size: 1.25rem; font-weight: bold; letter-spacing: .04em; }
+  header .subtitle { font-size: .8rem; color: var(--border); font-style: italic; }
+  .layout { display: flex; flex: 1; min-height: 0; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px; min-width: 220px;
+    background: var(--paper);
+    border-right: 2px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sidebar-header span { font-size: .85rem; font-weight: bold; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-light); }
+  .btn-small {
+    background: var(--seal); color: #fff;
+    border: none; padding: 5px 10px; border-radius: 3px;
+    cursor: pointer; font-size: .78rem; font-family: inherit;
+  }
+  .btn-small:hover { background: var(--seal-light); }
+  .case-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .case-item {
+    padding: 10px 14px; cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background .15s;
+  }
+  .case-item:hover { background: var(--paper-dark); }
+  .case-item.active { border-left-color: var(--seal); background: var(--paper-dark); }
+  .case-item .case-name { font-size: .88rem; font-weight: bold; }
+  .case-item .case-status { font-size: .74rem; margin-top: 2px; }
+  .status-draft { color: var(--ink-light); }
+  .status-active { color: var(--warning); }
+  .status-done { color: var(--success); }
+  .sidebar-nav { border-top: 1px solid var(--border); }
+  .nav-item {
+    padding: 11px 14px; cursor: pointer; font-size: .85rem;
+    border-left: 3px solid transparent;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-item:hover { background: var(--paper-dark); }
+  .nav-item.active { border-left-color: var(--gold); background: var(--paper-dark); font-weight: bold; }
+
+  /* Main */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .card-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--paper-dark);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-header h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-light); }
+  .card-body { padding: 18px; }
+  label { display: block; font-size: .82rem; color: var(--ink-light); margin-bottom: 4px; font-weight: bold; }
+  input[type=text], textarea, select {
+    width: 100%; border: 1px solid var(--border);
+    background: #fff; color: var(--ink);
+    padding: 8px 10px; font-family: inherit; font-size: .88rem;
+    border-radius: 3px; resize: vertical;
+  }
+  input[type=text]:focus, textarea:focus, select:focus {
+    outline: 2px solid var(--gold); border-color: var(--gold);
+  }
+  .form-row { margin-bottom: 14px; }
+  .btn {
+    padding: 8px 18px; border: none; border-radius: 3px;
+    cursor: pointer; font-family: inherit; font-size: .85rem;
+    font-weight: bold;
+  }
+  .btn-primary { background: var(--seal); color: #fff; }
+  .btn-primary:hover { background: var(--seal-light); }
+  .btn-secondary { background: var(--paper-dark); color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .disclaimer {
+    background: #fff8e1; border-left: 4px solid var(--gold);
+    padding: 10px 14px; font-size: .8rem; color: var(--ink-light);
+    margin: 12px 0; border-radius: 0 3px 3px 0;
+  }
+  .result-item {
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 10px 12px; margin-bottom: 8px;
+    background: #fff;
+  }
+  .result-item .ri-title { font-weight: bold; font-size: .88rem; }
+  .result-item .ri-meta { font-size: .76rem; color: var(--ink-light); margin-top: 3px; }
+  .result-item .ri-score { display: inline-block; background: var(--seal); color: #fff; font-size: .72rem; padding: 1px 6px; border-radius: 10px; margin-left: 6px; }
+  .tag-seed { background: #e0e0e0; color: #555; font-size: .7rem; padding: 1px 5px; border-radius: 8px; }
+  .tag-user { background: #d4edda; color: #155724; font-size: .7rem; padding: 1px 5px; border-radius: 8px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .74rem; font-weight: bold; }
+  .badge-high { background: #fde8e8; color: var(--seal); }
+  .badge-medium { background: #fff3cd; color: #856404; }
+  .badge-low { background: #d1f2eb; color: var(--success); }
+  .section-divider { border: none; border-top: 1px dashed var(--border); margin: 18px 0; }
+  .step-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+  .step-tab {
+    padding: 9px 16px; cursor: pointer; font-size: .83rem;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    color: var(--ink-light); transition: all .15s;
+  }
+  .step-tab.active { border-bottom-color: var(--seal); color: var(--seal); font-weight: bold; }
+  .step-tab:hover:not(.active) { background: var(--paper-dark); }
+  .hidden { display: none !important; }
+  .selected-norms { background: var(--paper-dark); border: 1px solid var(--border); border-radius: 3px; padding: 10px; margin-top: 8px; min-height: 40px; }
+  .norm-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 12px; padding: 3px 10px; margin: 3px; font-size: .78rem;
+  }
+  .norm-tag button { background: none; border: none; cursor: pointer; color: var(--seal); font-size: .9rem; line-height: 1; }
+  .conclusion-box {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 3px; padding: 14px; white-space: pre-wrap;
+    font-size: .84rem; line-height: 1.6; min-height: 200px;
+  }
+  .radio-group { display: flex; gap: 12px; flex-wrap: wrap; margin: 6px 0; }
+  .radio-group label { display: flex; align-items: center; gap: 5px; font-weight: normal; cursor: pointer; }
+  .empty-state { text-align: center; padding: 40px; color: var(--ink-light); font-style: italic; }
+  @media (max-width: 700px) {
+    .sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 2px solid var(--border); }
+    .layout { flex-direction: column; }
+    .main { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">⚖ Правовая экспертиза</div>
+    <div class="subtitle">Система поддержки юридического анализа · Республика Казахстан</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span>Дела</span>
+      <button class="btn-small" onclick="newCase()">+ Новое</button>
+    </div>
+    <div class="case-list" id="caseList"></div>
+    <div class="sidebar-nav">
+      <div class="nav-item" id="nav-db" onclick="showSection('db')">📚 База документов</div>
+    </div>
+  </aside>
+
+  <main class="main" id="mainContent">
+    <div class="empty-state" id="welcomeScreen">
+      <p style="font-size:2rem; margin-bottom:12px">⚖</p>
+      <p style="font-size:1rem; margin-bottom:8px; font-weight:bold;">Система правовой экспертизы</p>
+      <p>Создайте новое дело или выберите существующее из списка слева.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+// ===== STORAGE =====
+const STORAGE_KEY = 'legal_app_v1';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState(); }
+  catch(e) { return defaultState(); }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function defaultState() {
+  return {
+    cases: [],
+    docs: seedDocs(),
+    nextCaseId: 1,
+    nextDocId: 100
+  };
+}
+
+// ===== SEED DOCS =====
+function seedDocs() {
+  return [
+    {id:1, type:'norm', title:'ТК РК, ст. 52 — Расторжение трудового договора по инициативе работодателя', text:'Работодатель вправе расторгнуть трудовой договор по инициативе работодателя в случаях: ликвидации работодателя; сокращения численности или штата работников; несоответствия работника занимаемой должности; отсутствия работника без уважительных причин более трёх часов.', keywords:'трудовой договор расторжение увольнение работодатель сокращение', ref:'https://adilet.zan.kz', seed:true},
+    {id:2, type:'norm', title:'ГК РК, ст. 349 — Ответственность за нарушение обязательств', text:'Должник обязан возместить кредитору убытки, причинённые неисполнением или ненадлежащим исполнением обязательства. Убытки включают реальный ущерб и упущенную выгоду.', keywords:'убытки обязательство нарушение должник кредитор возмещение', ref:'https://adilet.zan.kz', seed:true},
+    {id:3, type:'norm', title:'ГК РК, ст. 615 — Договор аренды', text:'По договору аренды арендодатель обязуется предоставить арендатору имущество за плату во временное владение и пользование. Арендатор обязан своевременно вносить плату за пользование имуществом.', keywords:'аренда договор арендатор арендодатель имущество плата', ref:'https://adilet.zan.kz', seed:true},
+    {id:4, type:'norm', title:'КоАП РК, ст. 159 — Нарушение законодательства о труде', text:'Нарушение законодательства о труде влечёт предупреждение или штраф на должностных лиц. Повторное нарушение влечёт штраф в большем размере или приостановление деятельности.', keywords:'нарушение труд штраф административная ответственность КоАП', ref:'https://adilet.zan.kz', seed:true},
+    {id:5, type:'norm', title:'Закон РК «О защите прав потребителей», ст. 14 — Право на безопасность', text:'Потребитель имеет право на то, чтобы товар (работа, услуга) при обычных условиях использования был безопасен для жизни, здоровья, имущества потребителя.', keywords:'потребитель защита права безопасность товар услуга', ref:'https://adilet.zan.kz', seed:true},
+    {id:6, type:'norm', title:'НК РК, ст. 190 — Налоговая тайна', text:'Сведения о налогоплательщике, полученные налоговым органом, являются налоговой тайной и не подлежат разглашению, кроме случаев, предусмотренных настоящим Кодексом.', keywords:'налоговая тайна конфиденциальность налогоплательщик НК', ref:'https://adilet.zan.kz', seed:true},
+    {id:7, type:'practice', title:'Пример: Решение СМЭС по спору об аренде (иллюстративный)', text:'Суд признал договор аренды расторгнутым в связи с систематической просрочкой арендатором арендной платы более трёх раз подряд, удовлетворив требования истца о взыскании задолженности и неустойки.', keywords:'аренда расторжение просрочка арендная плата суд решение', ref:'https://sud.gov.kz', seed:true},
+    {id:8, type:'practice', title:'Пример: Нормативное постановление ВС по трудовым спорам (иллюстративный)', text:'Верховный Суд разъяснил, что увольнение работника признаётся незаконным, если работодатель не соблюл порядок уведомления, предусмотренный трудовым законодательством РК.', keywords:'увольнение незаконное трудовой спор работник уведомление', ref:'https://sud.gov.kz', seed:true}
+  ];
+}
+
+// ===== STATE =====
+let state = loadState();
+let currentCaseId = null;
+let currentSection = 'case'; // 'case' | 'db'
+let currentStep = 1;
+
+// ===== RENDER SIDEBAR =====
+function renderSidebar() {
+  const list = document.getElementById('caseList');
+  list.innerHTML = '';
+  if (state.cases.length === 0) {
+    list.innerHTML = '<div style="padding:14px;font-size:.8rem;color:#999;font-style:italic;">Нет дел</div>';
+    return;
+  }
+  state.cases.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'case-item' + (currentCaseId === c.id ? ' active' : '');
+    const statusLabel = {draft:'Черновик', active:'В работе', done:'Завершено'}[c.status];
+    const statusClass = {draft:'status-draft', active:'status-active', done:'status-done'}[c.status];
+    div.innerHTML = `<div class="case-name">${esc(c.name||'Без названия')}</div>
+      <div class="case-status ${statusClass}">${statusLabel}</div>`;
+    div.onclick = () => openCase(c.id);
+    list.appendChild(div);
+  });
+}
+
+// ===== CASE CRUD =====
+function newCase() {
+  const c = {
+    id: state.nextCaseId++,
+    name: 'Новое дело',
+    facts: '', question: '',
+    status: 'draft',
+    norms: [],
+    violation: '', riskLevel: '', legalBasis: '', recommendations: '',
+    practice: [],
+    reviewerNote: '',
+    createdAt: Date.now()
+  };
+  state.cases.unshift(c);
+  saveState();
+  openCase(c.id);
+}
+
+function openCase(id) {
+  currentCaseId = id;
+  currentSection = 'case';
+  currentStep = 1;
+  document.getElementById('nav-db').classList.remove('active');
+  renderSidebar();
+  renderCaseView();
+}
+
+function currentCase() { return state.cases.find(c => c.id === currentCaseId); }
+
+// ===== CASE VIEW =====
+function renderCaseView() {
+  const c = currentCase();
+  if (!c) return;
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="step-tabs">
+      ${[1,2,3,4,5].map(i => `<div class="step-tab${currentStep===i?' active':''}" onclick="goStep(${i})">Блок ${i}: ${stepName(i)}</div>`).join('')}
+    </div>
+    <div id="stepContent"></div>
+  `;
+  renderStep();
+}
+
+function stepName(i) {
+  return ['Факты','Нормы','Выводы','Практика','Заключение'][i-1];
+}
+
+function goStep(i) {
+  saveCaseFields();
+  currentStep = i;
+  renderStep();
+  // update tab highlight
+  document.querySelectorAll('.step-tab').forEach((t,idx) => t.classList.toggle('active', idx+1===i));
+  document.getElementById('stepContent').scrollIntoView({behavior:'smooth'});
+}
+
+function renderStep() {
+  const c = currentCase();
+  const el = document.getElementById('stepContent');
+  if (!el||!c) return;
+  if (currentStep===1) el.innerHTML = renderStep1(c);
+  else if (currentStep===2) el.innerHTML = renderStep2(c);
+  else if (currentStep===3) el.innerHTML = renderStep3(c);
+  else if (currentStep===4) el.innerHTML = renderStep4(c);
+  else if (currentStep===5) el.innerHTML = renderStep5(c);
+}
+
+// STEP 1
+function renderStep1(c) {
+  return `
+  <div class="card">
+    <div class="card-header"><h2>Блок 1 — Анализ ситуации</h2></div>
+    <div class="card-body">
+      <div class="form-row">
+        <label>Название дела</label>
+        <input type="text" id="f_name" value="${esc(c.name)}" placeholder="Напр.: Спор об аренде офиса №3 / 2026">
+      </div>
+      <div class="form-row">
+        <label>Фактические обстоятельства</label>
+        <textarea id="f_facts" rows="6" placeholder="Изложите факты дела: стороны, события, хронология, имеющиеся документы...">${esc(c.facts)}</textarea>
+      </div>
+      <div class="form-row">
+        <label>Спорный правовой вопрос</label>
+        <textarea id="f_question" rows="3" placeholder="Чётко сформулируйте юридический вопрос, требующий ответа...">${esc(c.question)}</textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveAndNext()">Сохранить и перейти к нормам →</button>
+        <select id="f_status" onchange="saveStatus()">
+          <option value="draft"${c.status==='draft'?' selected':''}>Черновик</option>
+          <option value="active"${c.status==='active'?' selected':''}>В работе</option>
+          <option value="done"${c.status==='done'?' selected':''}>Завершено</option>
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+// STEP 2
+function renderStep2(c) {
+  const results = searchDocs(c.facts + ' ' + c.question, 'norm');
+  return `
+  <div class="card">
+    <div class="card-header"><h2>Блок 2 — Поиск нормы законодательства</h2></div>
+    <div class="card-body">
+      <div class="disclaimer">⚠ Поиск осуществляется по ключевым словам в базе документов. Результаты носят справочный характер — окончательный выбор применимой нормы за юристом.</div>
+      <div class="form-row">
+        <label>Дополнительный поиск</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="searchQuery" placeholder="Уточните запрос...">
+          <button class="btn btn-secondary" onclick="runManualSearch('norm')">Найти</button>
+        </div>
+      </div>
+      <div id="searchResults2">${renderDocResults(results, 'norm', c)}</div>
+      <hr class="section-divider">
+      <label>Выбранные нормы по делу</label>
+      <div class="selected-norms" id="selectedNorms">${renderSelectedNorms(c)}</div>
+      <hr class="section-divider">
+      <details>
+        <summary style="cursor:pointer;font-size:.85rem;color:var(--ink-light);margin-bottom:8px">+ Добавить норму вручную</summary>
+        <div style="margin-top:10px">
+          <div class="form-row"><label>Наименование нормы</label><input type="text" id="mn_title" placeholder="Напр.: ГК РК ст. 407"></div>
+          <div class="form-row"><label>Текст нормы</label><textarea id="mn_text" rows="3"></textarea></div>
+          <div class="form-row"><label>Ссылка на источник</label><input type="text" id="mn_ref" placeholder="https://adilet.zan.kz/..."></div>
+          <button class="btn btn-secondary" onclick="addManualNorm()">Добавить в базу и в дело</button>
+        </div>
+      </details>
+      <hr class="section-divider">
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(1)">← Назад</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Перейти к выводам →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// STEP 3
+function renderStep3(c) {
+  const normList = c.norms.map(nid => {
+    const d = state.docs.find(d=>d.id===nid);
+    return d ? `<div style="font-size:.82rem;margin-bottom:4px">• ${esc(d.title)}</div>` : '';
+  }).join('');
+  return `
+  <div class="card">
+    <div class="card-header"><h2>Блок 3 — Формулировка выводов и рекомендаций</h2></div>
+    <div class="card-body">
+      <div class="disclaimer">📌 Все поля заполняются юристом самостоятельно. Система не генерирует правовые выводы автоматически.</div>
+      ${c.norms.length > 0 ? `<div class="form-row"><label>Применяемые нормы</label><div style="background:var(--paper-dark);border:1px solid var(--border);border-radius:3px;padding:10px">${normList}</div></div>` : ''}
+      <div class="form-row">
+        <label>Наличие нарушения</label>
+        <div class="radio-group">
+          <label><input type="radio" name="violation" value="yes"${c.violation==='yes'?' checked':''}> Да, нарушение имеется</label>
+          <label><input type="radio" name="violation" value="partial"${c.violation==='partial'?' checked':''}> Частично</label>
+          <label><input type="radio" name="violation" value="no"${c.violation==='no'?' checked':''}> Нет нарушения</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Уровень правового риска</label>
+        <div class="radio-group">
+          <label><input type="radio" name="riskLevel" value="high"${c.riskLevel==='high'?' checked':''}> <span class="badge badge-high">Высокий</span></label>
+          <label><input type="radio" name="riskLevel" value="medium"${c.riskLevel==='medium'?' checked':''}> <span class="badge badge-medium">Средний</span></label>
+          <label><input type="radio" name="riskLevel" value="low"${c.riskLevel==='low'?' checked':''}> <span class="badge badge-low">Низкий</span></label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Правовое обоснование</label>
+        <textarea id="f_legalBasis" rows="5" placeholder="Изложите правовой анализ ситуации со ссылками на применяемые нормы...">${esc(c.legalBasis)}</textarea>
+      </div>
+      <div class="form-row">
+        <label>Рекомендации</label>
+        <textarea id="f_recommendations" rows="4" placeholder="Конкретные действия, которые необходимо предпринять...">${esc(c.recommendations)}</textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="saveAndGoStep(2)">← Назад</button>
+        <button class="btn btn-primary" onclick="saveAndGoStep(4)">Перейти к практике →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// STEP 4
+function renderStep4(c) {
+  const results = searchDocs(c.facts + ' ' + c.question, 'practice');
+  return `
+  <div class="card">
+    <div class="card-header"><h2>Блок 4 — Судебная практика и разъяснения</h2></div>
+    <div class="card-body">
+      <div class="disclaimer">⚠ Затравочные примеры практики не являются достоверной базой и требуют проверки на официальных ресурсах: <a href="https://sud.gov.kz" target="_blank">sud.gov.kz</a>, <a href="https://adilet.zan.kz" target="_blank">adilet.zan.kz</a>.</div>
+      <div class="form-row">
+        <button class="btn btn-gold" onclick="webSearch()">🔍 Искать практику через Claude (веб-поиск)</button>
+      </div>
+      <div id="searchResults4">${renderDocResults(results, 'practice', c)}</div>
+      <hr class="section-divider">
+      <label>Выбранная практика по делу</label>
+      <div class="selected-norms" id="selectedPractice">${renderSelectedPractice(c)}</div>
+      <hr class="section-divider">
+      <details>
+        <summary style="cursor:pointer;font-size:.85rem;color:var(--ink-light);margin-bottom:8px">+ Добавить практику вручную</summary>
+        <div style="margin-top:10px">
+          <div class="form-row"><label>Наименование</label><input type="text" id="mp_title" placeholder="Напр.: Решение СМЭС г. Алматы от 12.03.2025"></div>
+          <div class="form-row"><label>Суть решения</label><textarea id="mp_text" rows="3"></textarea></div>
+          <div class="form-row"><label>Реферальная ссылка (URL)</label><input type="text" id="mp_ref" placeholder="https://sud.gov.kz/..."></div>
+          <button class="btn btn-secondary" onclick="addManualPractice()">Добавить в базу и в дело</button>
+        </div>
+      </details>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(3)">← Назад</button>
+        <button class="btn btn-primary" onclick="goStep(5)">Перейти к заключению →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// STEP 5
+function renderStep5(c) {
+  const text = buildConclusion(c);
+  return `
+  <div class="card">
+    <div class="card-header"><h2>Блок 5 — Правовое заключение</h2></div>
+    <div class="card-body">
+      <div class="disclaimer">📋 Заключение является черновиком и не имеет юридической силы до проверки и подписания уполномоченным юристом.</div>
+      <div class="conclusion-box" id="conclusionText">${esc(text)}</div>
+      <div class="form-row" style="margin-top:14px">
+        <label>Примечания проверяющего юриста</label>
+        <textarea id="f_reviewerNote" rows="4" placeholder="Замечания, правки, подпись проверяющего...">${esc(c.reviewerNote||'')}</textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="copyConclusion()">📋 Копировать</button>
+        <button class="btn btn-secondary" onclick="downloadConclusion()">⬇ Скачать .txt</button>
+        <button class="btn btn-success" onclick="markDone()">✓ Отметить завершённым</button>
+        <button class="btn btn-secondary" onclick="goStep(4)">← Назад</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== SEARCH =====
+function tokenize(str) {
+  return (str||'').toLowerCase().replace(/[^\wа-яёА-ЯЁ\s]/g,'').split(/\s+/).filter(Boolean);
+}
+function searchDocs(query, type) {
+  const tokens = tokenize(query);
+  if (!tokens.length) return [];
+  return state.docs
+    .filter(d => d.type === type)
+    .map(d => {
+      const haystack = tokenize(d.title + ' ' + d.text + ' ' + d.keywords);
+      const score = tokens.filter(t => haystack.some(h => h.includes(t))).length;
+      return {...d, score};
+    })
+    .filter(d => d.score > 0)
+    .sort((a,b) => b.score - a.score)
+    .slice(0,6);
+}
+
+function renderDocResults(results, type, c) {
+  if (!results.length) return '<div style="font-size:.82rem;color:#999;padding:8px">Совпадений не найдено. Уточните запрос или добавьте документы в базу.</div>';
+  const selectedIds = type === 'norm' ? c.norms : c.practice;
+  return results.map(d => {
+    const selected = selectedIds.includes(d.id);
+    return `<div class="result-item">
+      <div class="ri-title">${esc(d.title)} <span class="ri-score">+${d.score}</span></div>
+      <div class="ri-meta">${d.seed ? '<span class="tag-seed">затравочный пример</span>' : '<span class="tag-user">из вашей базы</span>'}</div>
+      <div style="font-size:.79rem;color:var(--ink-light);margin-top:6px">${esc(d.text.slice(0,180))}${d.text.length>180?'...':''}</div>
+      ${d.ref ? `<div style="font-size:.76rem;margin-top:4px"><a href="${esc(d.ref)}" target="_blank">${esc(d.ref)}</a></div>` : ''}
+      <div class="btn-row" style="margin-top:8px">
+        ${selected
+          ? `<button class="btn btn-secondary" style="font-size:.76rem;padding:4px 10px" onclick="removeFromCase(${d.id},'${type}')">✕ Убрать из дела</button>`
+          : `<button class="btn btn-primary" style="font-size:.76rem;padding:4px 10px" onclick="addToCase(${d.id},'${type}')">+ В дело</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function runManualSearch(type) {
+  const c = currentCase();
+  const q = document.getElementById('searchQuery').value;
+  const results = searchDocs(q || (c.facts + ' ' + c.question), type);
+  document.getElementById('searchResults2').innerHTML = renderDocResults(results, type, c);
+}
+
+function addToCase(docId, type) {
+  const c = currentCase();
+  const arr = type === 'norm' ? c.norms : c.practice;
+  if (!arr.includes(docId)) arr.push(docId);
+  saveState();
+  renderStep();
+}
+
+function removeFromCase(docId, type) {
+  const c = currentCase();
+  if (type === 'norm') c.norms = c.norms.filter(id=>id!==docId);
+  else c.practice = c.practice.filter(id=>id!==docId);
+  saveState();
+  renderStep();
+}
+
+function renderSelectedNorms(c) {
+  if (!c.norms.length) return '<span style="font-size:.8rem;color:#999">Нормы не выбраны</span>';
+  return c.norms.map(nid => {
+    const d = state.docs.find(d=>d.id===nid);
+    if (!d) return '';
+    return `<span class="norm-tag">${esc(d.title.slice(0,60))} <button onclick="removeFromCase(${d.id},'norm')">×</button></span>`;
+  }).join('');
+}
+
+function renderSelectedPractice(c) {
+  if (!c.practice.length) return '<span style="font-size:.8rem;color:#999">Практика не добавлена</span>';
+  return c.practice.map(nid => {
+    const d = state.docs.find(d=>d.id===nid);
+    if (!d) return '';
+    return `<span class="norm-tag">${esc(d.title.slice(0,60))} <button onclick="removeFromCase(${d.id},'practice')">×</button></span>`;
+  }).join('');
+}
+
+function addManualNorm() {
+  const title = document.getElementById('mn_title').value.trim();
+  const text = document.getElementById('mn_text').value.trim();
+  const ref = document.getElementById('mn_ref').value.trim();
+  if (!title) { alert('Введите наименование нормы'); return; }
+  const doc = {id: state.nextDocId++, type:'norm', title, text, keywords:'', ref, seed:false};
+  state.docs.push(doc);
+  addToCase(doc.id, 'norm');
+}
+
+function addManualPractice() {
+  const title = document.getElementById('mp_title').value.trim();
+  const text = document.getElementById('mp_text').value.trim();
+  const ref = document.getElementById('mp_ref').value.trim();
+  if (!title) { alert('Введите наименование'); return; }
+  const doc = {id: state.nextDocId++, type:'practice', title, text, keywords:'', ref, seed:false};
+  state.docs.push(doc);
+  addToCase(doc.id, 'practice');
+}
+
+// ===== SAVE FIELDS =====
+function saveCaseFields() {
+  const c = currentCase();
+  if (!c) return;
+  const v = id => { const el=document.getElementById(id); return el?el.value:''; };
+  if (currentStep===1) {
+    c.name = v('f_name') || 'Без названия';
+    c.facts = v('f_facts');
+    c.question = v('f_question');
+  } else if (currentStep===3) {
+    const vr = document.querySelector('input[name=violation]:checked');
+    const rl = document.querySelector('input[name=riskLevel]:checked');
+    c.violation = vr ? vr.value : c.violation;
+    c.riskLevel = rl ? rl.value : c.riskLevel;
+    c.legalBasis = v('f_legalBasis');
+    c.recommendations = v('f_recommendations');
+  } else if (currentStep===5) {
+    c.reviewerNote = v('f_reviewerNote');
+  }
+  saveState();
+  renderSidebar();
+}
+
+function saveStatus() {
+  const c = currentCase();
+  if (!c) return;
+  c.status = document.getElementById('f_status').value;
+  saveState(); renderSidebar();
+}
+
+function saveAndNext() { saveCaseFields(); goStep(currentStep+1); }
+function saveAndGoStep(n) { saveCaseFields(); goStep(n); }
+
+// ===== CONCLUSION =====
+function buildConclusion(c) {
+  const violationText = {yes:'Да, нарушение имеется', partial:'Нарушение носит частичный характер', no:'Нарушения не выявлено', '':'Не определено'}[c.violation||''];
+  const riskText = {high:'Высокий', medium:'Средний', low:'Низкий', '':'Не определён'}[c.riskLevel||''];
+
+  const norms = c.norms.map(id => {
+    const d = state.docs.find(d=>d.id===id);
+    return d ? `  • ${d.title}${d.ref ? '\n    Источник: '+d.ref : ''}` : '';
+  }).filter(Boolean).join('\n');
+
+  const pract = c.practice.map(id => {
+    const d = state.docs.find(d=>d.id===id);
+    return d ? `  • ${d.title}${d.ref ? '\n    Ссылка: '+d.ref : ''}` : '';
+  }).filter(Boolean).join('\n');
+
+  return `ПРАВОВОЕ ЗАКЛЮЧЕНИЕ
+${'='.repeat(60)}
+
+Дело: ${c.name}
+Дата подготовки: ${new Date().toLocaleDateString('ru-KZ')}
+
+1. ФАКТИЧЕСКИЕ ОБСТОЯТЕЛЬСТВА
+${c.facts || '(не заполнено)'}
+
+2. СПОРНЫЙ ПРАВОВОЙ ВОПРОС
+${c.question || '(не заполнено)'}
+
+3. ПРИМЕНЯЕМЫЕ НОРМЫ ЗАКОНОДАТЕЛЬСТВА РК
+${norms || '(нормы не выбраны)'}
+
+4. ПРАВОВАЯ ОЦЕНКА
+Наличие нарушения: ${violationText}
+Уровень риска: ${riskText}
+
+Правовое обоснование:
+${c.legalBasis || '(не заполнено)'}
+
+5. РЕКОМЕНДАЦИИ
+${c.recommendations || '(не заполнено)'}
+
+6. СУДЕБНАЯ ПРАКТИКА И РАЗЪЯСНЕНИЯ
+${pract || '(практика не добавлена)'}
+
+${'─'.repeat(60)}
+ОГОВОРКА: Настоящее заключение является черновым документом,
+подготовленным с использованием системы поддержки правового анализа.
+Заключение не имеет юридической силы и подлежит проверке,
+корректировке и подписанию уполномоченным юристом.
+
+Подпись юриста: ___________________________ / ${new Date().toLocaleDateString('ru-KZ')} /
+
+${c.reviewerNote ? `\nПримечания проверяющего:\n${c.reviewerNote}` : ''}`;
+}
+
+function copyConclusion() {
+  saveCaseFields();
+  const c = currentCase();
+  navigator.clipboard.writeText(buildConclusion(c))
+    .then(()=>alert('Заключение скопировано в буфер обмена.'))
+    .catch(()=>alert('Не удалось скопировать. Выделите текст вручную.'));
+}
+
+function downloadConclusion() {
+  saveCaseFields();
+  const c = currentCase();
+  const text = buildConclusion(c);
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `zakluchenie_${(c.name||'delo').replace(/[^a-zа-яё0-9]/gi,'_')}.txt`;
+  a.click();
+}
+
+function markDone() {
+  saveCaseFields();
+  const c = currentCase();
+  c.status = 'done';
+  saveState();
+  renderSidebar();
+  alert('Дело отмечено как завершённое.');
+}
+
+function webSearch() {
+  const c = currentCase();
+  const q = encodeURIComponent(`судебная практика РК по делу: ${c.question || c.facts.slice(0,100)}`);
+  window.open(`https://www.google.com/search?q=${q}+site:sud.gov.kz+OR+site:adilet.zan.kz`, '_blank');
+}
+
+// ===== DOCUMENT BASE SECTION =====
+function showSection(section) {
+  currentSection = section;
+  currentCaseId = null;
+  document.getElementById('nav-db').classList.add('active');
+  document.querySelectorAll('.case-item').forEach(el=>el.classList.remove('active'));
+  renderDbSection();
+}
+
+function renderDbSection() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+  <div class="card">
+    <div class="card-header"><h2>База документов — нормы и практика</h2></div>
+    <div class="card-body">
+      <div class="disclaimer">📚 Добавляйте законодательство РК, судебные решения и разъяснения госорганов. Затравочные примеры защищены от удаления и служат только для демонстрации поиска.</div>
+      <details style="margin-bottom:14px">
+        <summary style="cursor:pointer;font-size:.88rem;font-weight:bold">+ Добавить документ в базу</summary>
+        <div style="margin-top:12px;border:1px solid var(--border);border-radius:3px;padding:14px;background:#fff">
+          <div class="form-row">
+            <label>Тип документа</label>
+            <select id="db_type"><option value="norm">Норма законодательства</option><option value="practice">Судебная практика / разъяснение</option></select>
+          </div>
+          <div class="form-row"><label>Наименование</label><input type="text" id="db_title" placeholder="Напр.: ГК РК ст. 407 — ..."></div>
+          <div class="form-row"><label>Текст / краткое содержание</label><textarea id="db_text" rows="4"></textarea></div>
+          <div class="form-row"><label>Ключевые слова (через пробел)</label><input type="text" id="db_keywords" placeholder="договор аренда обязательство..."></div>
+          <div class="form-row"><label>Ссылка на источник</label><input type="text" id="db_ref" placeholder="https://adilet.zan.kz/..."></div>
+          <button class="btn btn-primary" onclick="addDbDoc()">Добавить</button>
+        </div>
+      </details>
+      <div id="dbList">${renderDbList()}</div>
+    </div>
+  </div>`;
+}
+
+function renderDbList() {
+  const norms = state.docs.filter(d=>d.type==='norm');
+  const pract = state.docs.filter(d=>d.type==='practice');
+  const renderGroup = (docs, label) => {
+    if (!docs.length) return '';
+    return `<div style="margin-bottom:18px">
+      <div style="font-size:.82rem;font-weight:bold;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-light);margin-bottom:8px">${label}</div>
+      ${docs.map(d=>`<div class="result-item">
+        <div class="ri-title">${esc(d.title)}</div>
+        <div class="ri-meta">${d.seed ? '<span class="tag-seed">затравочный пример</span>' : '<span class="tag-user">ваш документ</span>'}${d.ref?` · <a href="${esc(d.ref)}" target="_blank" style="font-size:.76rem">${esc(d.ref)}</a>`:''}</div>
+        <div style="font-size:.79rem;color:var(--ink-light);margin-top:6px">${esc(d.text.slice(0,200))}${d.text.length>200?'...':''}</div>
+        ${!d.seed ? `<button class="btn btn-secondary" style="font-size:.74rem;padding:3px 8px;margin-top:8px;color:var(--seal)" onclick="deleteDoc(${d.id})">Удалить</button>` : ''}
+      </div>`).join('')}
+    </div>`;
+  };
+  return renderGroup(norms, 'Нормы законодательства') + renderGroup(pract, 'Судебная практика и разъяснения');
+}
+
+function addDbDoc() {
+  const title = document.getElementById('db_title').value.trim();
+  const text = document.getElementById('db_text').value.trim();
+  if (!title) { alert('Введите наименование'); return; }
+  const doc = {
+    id: state.nextDocId++,
+    type: document.getElementById('db_type').value,
+    title, text,
+    keywords: document.getElementById('db_keywords').value.trim(),
+    ref: document.getElementById('db_ref').value.trim(),
+    seed: false
+  };
+  state.docs.push(doc);
+  saveState();
+  document.getElementById('dbList').innerHTML = renderDbList();
+}
+
+function deleteDoc(id) {
+  if (!confirm('Удалить документ из базы?')) return;
+  state.docs = state.docs.filter(d=>d.id!==id);
+  // Remove from all cases
+  state.cases.forEach(c => {
+    c.norms = c.norms.filter(i=>i!==id);
+    c.practice = c.practice.filter(i=>i!==id);
+  });
+  saveState();
+  document.getElementById('dbList').innerHTML = renderDbList();
+}
+
+// ===== UTILS =====
+function esc(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== INIT =====
+renderSidebar();
+</script>
+</body>
+</html>
