@@ -190,6 +190,7 @@
     </div>
     <div class="case-list" id="caseList"></div>
     <div class="sidebar-nav">
+      <div class="nav-item" id="nav-codes" onclick="showSection('codes')">📖 Кодексы РК</div>
       <div class="nav-item" id="nav-db" onclick="showSection('db')">📚 База документов</div>
     </div>
   </aside>
@@ -846,9 +847,114 @@ function webSearch() {
 function showSection(section) {
   currentSection = section;
   currentCaseId = null;
-  document.getElementById('nav-db').classList.add('active');
+  document.getElementById('nav-db').classList.toggle('active', section === 'db');
+  document.getElementById('nav-codes').classList.toggle('active', section === 'codes');
   document.querySelectorAll('.case-item').forEach(el=>el.classList.remove('active'));
-  renderDbSection();
+  if (section === 'codes') renderCodesSection();
+  else renderDbSection();
+}
+
+const ALL_CODES = [
+  {
+    group: 'Гражданское и процессуальное право',
+    items: [
+      { title: 'Гражданский кодекс РК (Общая часть)', date: 'от 27.12.1994 № 268-XIII', url: 'https://adilet.zan.kz/rus/docs/K940001000_' },
+      { title: 'Гражданский кодекс РК (Особенная часть)', date: 'от 01.07.1999 № 409-I', url: 'https://adilet.zan.kz/rus/docs/K990000409_' },
+      { title: 'Гражданский процессуальный кодекс РК', date: 'от 31.10.2015 № 377-V', url: 'https://adilet.zan.kz/rus/docs/K1500000377' },
+    ]
+  },
+  {
+    group: 'Уголовное право и процесс',
+    items: [
+      { title: 'Уголовный кодекс РК', date: 'от 03.07.2014 № 226-V', url: 'https://adilet.zan.kz/rus/docs/K1400000226' },
+      { title: 'Уголовно-процессуальный кодекс РК', date: 'от 04.07.2014 № 231-V', url: 'https://adilet.zan.kz/rus/docs/K1400000231' },
+      { title: 'Уголовно-исполнительный кодекс РК', date: 'от 05.07.2014 № 234-V', url: 'https://adilet.zan.kz/rus/docs/K1400000234' },
+    ]
+  },
+  {
+    group: 'Административное право',
+    items: [
+      { title: 'Кодекс РК об административных правонарушениях (КоАП)', date: 'от 05.07.2014 № 235-V', url: 'https://adilet.zan.kz/rus/docs/K1400000235/k14235.htm' },
+      { title: 'Административный процедурно-процессуальный кодекс РК (АППК)', date: 'от 29.06.2020 № 350-VI', url: 'https://adilet.zan.kz/rus/docs/K2000000350' },
+    ]
+  },
+  {
+    group: 'Трудовое и социальное право',
+    items: [
+      { title: 'Трудовой кодекс РК', date: 'от 23.11.2015 № 414-V', url: 'https://adilet.zan.kz/rus/docs/K1500000414/k150414.htm' },
+      { title: 'Социальный кодекс РК', date: 'от 20.04.2023 № 224-VII', url: 'https://adilet.zan.kz/rus/docs/K2300000224' },
+    ]
+  },
+  {
+    group: 'Предпринимательство, налоги, бюджет',
+    items: [
+      { title: 'Предпринимательский кодекс РК', date: 'от 29.10.2015 № 375-V', url: 'https://adilet.zan.kz/rus/docs/K1500000375' },
+      { title: 'Налоговый кодекс РК (О налогах и обязательных платежах в бюджет)', date: 'от 25.12.2017 № 120-VI', url: 'https://adilet.zan.kz/rus/docs/K1700000120' },
+      { title: 'Бюджетный кодекс РК', date: 'от 04.12.2008 № 95-IV', url: 'https://adilet.zan.kz/rus/docs/K080000095_' },
+    ]
+  },
+  {
+    group: 'Природные ресурсы и экология',
+    items: [
+      { title: 'Земельный кодекс РК', date: 'от 20.06.2003 № 442-II', url: 'https://adilet.zan.kz/rus/docs/K030000442_' },
+      { title: 'Экологический кодекс РК', date: 'от 02.01.2021 № 400-VI', url: 'https://adilet.zan.kz/rus/docs/K2100000400' },
+      { title: 'Водный кодекс РК', date: 'от 09.07.2003 № 481-II', url: 'https://adilet.zan.kz/rus/docs/K030000481_' },
+      { title: 'Лесной кодекс РК', date: 'от 08.07.2003 № 477-II', url: 'https://adilet.zan.kz/rus/docs/K030000477_' },
+      { title: 'Кодекс РК о недрах и недропользовании', date: 'от 27.12.2017 № 125-VI', url: 'https://adilet.zan.kz/rus/docs/K1700000125' },
+    ]
+  },
+  {
+    group: 'Здоровье, дети, семья',
+    items: [
+      { title: 'Кодекс РК о здоровье народа и системе здравоохранения', date: 'от 07.07.2020 № 360-VI', url: 'https://adilet.zan.kz/rus/docs/K2000000360' },
+      { title: 'Кодекс РК о браке (супружестве) и семье', date: 'от 26.12.2011 № 518-IV', url: 'https://adilet.zan.kz/rus/docs/K1100000518' },
+    ]
+  },
+];
+
+function renderCodesSection() {
+  const main = document.getElementById('mainContent');
+  const groups = ALL_CODES.map(g => `
+    <div style="margin-bottom:22px">
+      <div style="font-size:.8rem;font-weight:bold;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-light);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)">${esc(g.group)}</div>
+      ${g.items.map(item => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;background:#fff;border:1px solid var(--border);border-radius:3px;margin-bottom:6px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:.88rem;font-weight:bold;color:var(--ink)">${esc(item.title)}</div>
+            <div style="font-size:.76rem;color:var(--ink-light);margin-top:2px">${esc(item.date)}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <a href="${esc(item.url)}" target="_blank" class="btn btn-secondary" style="font-size:.76rem;padding:4px 10px;text-decoration:none">Аділет ↗</a>
+            <button class="btn btn-gold" style="font-size:.76rem;padding:4px 10px" onclick="addCodeToBase(${JSON.stringify(item).replace(/'/g,'&#39;')})">+ В базу</button>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  main.innerHTML = `
+  <div class="card">
+    <div class="card-header"><h2>Кодексы Республики Казахстан</h2></div>
+    <div class="card-body">
+      <div class="disclaimer">📖 Ссылки ведут на официальный портал ИПС «Әділет» (adilet.zan.kz). Кнопка «+ В базу» добавляет кодекс как документ для поиска по делам.</div>
+      ${groups}
+    </div>
+  </div>`;
+}
+
+function addCodeToBase(item) {
+  if (state.docs.some(d => d.ref === item.url && d.title === item.title)) {
+    alert('Этот кодекс уже есть в базе документов.'); return;
+  }
+  state.docs.push({
+    id: state.nextDocId++,
+    type: 'norm',
+    title: item.title + ' ' + item.date,
+    text: item.title + '. Официальный текст доступен по ссылке: ' + item.url,
+    keywords: item.title.toLowerCase(),
+    ref: item.url,
+    seed: false
+  });
+  saveState();
+  alert('Добавлено в базу документов. Теперь кодекс будет участвовать в поиске по делам.');
 }
 
 function renderDbSection() {
